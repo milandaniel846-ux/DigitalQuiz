@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dynamic Quiz App - Dark Mode & Animated Background</title>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+/* ------------------------------
+GLOBAL DARK THEME & ANIMATED BACKGROUND
+------------------------------ */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Animated gradient overlay */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(270deg, #1a1a1a, #222, #1a1a1a);
+    background-size: 600% 600%;
+    animation: gradientAnimation 20s ease infinite;
+    z-index: -2;
+}
+
+@keyframes gradientAnimation {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+
+/* Floating particles */
+.particle {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(0, 170, 255, 0.2);
+    pointer-events: none;
+    animation: floatParticles linear infinite;
+    z-index: -1;
+}
+
+@keyframes floatParticles {
+    0% {transform: translateY(0) translateX(0);}
+    100% {transform: translateY(-120vh) translateX(var(--x-offset));}
+}
+
+header {
+    text-align: center;
+    padding: 20px;
+    z-index: 1;
+    position: relative;
+}
+
+#logo {
+    width: 120px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 2px solid #fff;
+}
+
+/* Marquee replacement */
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+    background: #000000aa;
+    color: #fff;
+    padding: 8px;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.marquee-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: scroll 15s linear infinite;
+}
+
+@keyframes scroll {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+}
+
+#userForm, #quizBox, #resultBox {
+    width: 80%;
+    max-width: 600px;
+    margin: 25px auto;
+    background: #222222dd;
+    color: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.7);
+    transition: background 0.5s, color 0.5s;
+    z-index: 1;
+    position: relative;
+    text-align: center;
+}
+
+#userForm .input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+#userForm label {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+#userForm input[type="text"] {
+    width: 70%;
+    max-width: 300px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid #555;
+    background: #333;
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 15px;
+    transition: 0.2s;
+}
+
+#userForm input[type="text"]:focus {
+    border-color: #00aaff;
+    outline: none;
+}
+
+.invalid {
+    border-color: red !important;
+    background: #550000 !important;
+}
+
+button {
+    padding: 12px 18px;
+    background: #00aaff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #0077aa;
+}
+
+#feedback {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 10px;
+    display: none;
+    font-weight: bold;
+}
+
+.correct {
+    background: #28a745;
+    border: 2px solid #1f7a2e;
+}
+
+.wrong {
+    background: #dc3545;
+    border: 2px solid #7a1f1f;
+}
+
+.review-item {
+    background: #333;
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 8px;
+    color: #e0e0e0;
+    text-align: left;
+
+    /* Hover glow effect */
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(0, 170, 255, 0.2);
+}
+
+.review-item:hover {
+    background: #444;
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.5);
+    transform: translateY(-2px);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <img id="logo" src="c:\Users\DESKTOP\Pictures\c.png" alt="Colegio De Montalban Logo">
+    <h1>Dynamic Quiz App</h1>
+</header>
+
+<div class="marquee-container">
+    <div class="marquee-text">Daniel Sto. Domingo Jr. • Ron Angelo Albar • Fritchgerald Galan</div>
+</div>
+
+<div id="userForm">
+    <h2>Enter Your Details</h2>
+    <div class="input-container">
+        <label>Name:</label>
+        <input type="text" id="name">
+
+        <label>Student ID:</label>
+        <input type="text" id="studentId">
+
+        <button id="startBtn">Start Quiz</button>
+    </div>
+</div>
+
+<div id="quizBox" style="display:none;">
+    <h2 id="questionText"></h2>
+    <input type="text" id="answerInput"><br><br>
+    <button id="submitBtn">Submit Answer</button>
+    <button id="nextBtn" style="display:none;">Next Question</button>
+    <div id="feedback"></div>
+</div>
+
+<div id="resultBox" style="display:none;">
+    <h2>Quiz Finished!</h2>
+    <h3 id="finalName"></h3>
+    <h1>Your Score: <span id="finalScore"></span>/15</h1>
+
+    <h2>Review Answers:</h2>
+    <div id="reviewList"></div>
+</div>
+
+<script>
+/* ------------------------------
+PARTICLES CREATION
+------------------------------ */
+const particleCount = 30;
+for (let i = 0; i < particleCount; i++) {
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    let size = Math.random() * 10 + 5;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.top = Math.random() * 100 + 'vh';
+    p.style.animationDuration = (Math.random() * 30 + 20) + 's';
+    p.style.animationDelay = (Math.random() * 20) + 's';
+    p.style.setProperty('--x-offset', (Math.random() * 100 - 50) + "px");
+    document.body.appendChild(p);
+}
+
+/* ------------------------------
+NAME & STUDENT ID VALIDATION
+------------------------------ */
+$("#name").on("input", function () {
+    let value = $(this).val();
+    let cleaned = value.replace(/[^a-zA-Z .-]/g, "");
+    if (value !== cleaned) $(this).addClass("invalid");
+    else $(this).removeClass("invalid");
+    $(this).val(cleaned);
+});
+
+// Allow numbers and dash (-) for Student ID
+$("#studentId").on("input", function () {
+    let value = $(this).val();
+    let cleaned = value.replace(/[^0-9-]/g, ""); // allow digits and -
+    if (value !== cleaned) $(this).addClass("invalid");
+    else $(this).removeClass("invalid");
+    $(this).val(cleaned);
+});
+
+/* ------------------------------
+QUIZ DATA
+------------------------------ */
+const quizData = [
+    { num: 1, q: "What does HTML stand for?", a: "HyperText Markup Language" },
+    { num: 2, q: "Which tag is used for the largest heading?", a: "<h1>" },
+    { num: 3, q: "CSS stands for?", a: "Cascading Style Sheets" },
+    { num: 4, q: "Which property changes text color?", a: "color" },
+    { num: 5, q: "JavaScript is ____ side scripting?", a: "client" },
+    { num: 6, q: "Which symbol begins a jQuery selector?", a: "$" },
+    { num: 7, q: "Which tag is used to insert an image?", a: "<img>" },
+    { num: 8, q: "What CSS property sets background color?", a: "background-color" },
+    { num: 9, q: "JS function to print in console?", a: "console.log" },
+    { num: 10, q: "jQuery is a library for ____?", a: "JavaScript" },
+    { num: 11, q: "What tag creates a line break?", a: "<br>" },
+    { num: 12, q: "CSS to make text bold?", a: "font-weight" },
+    { num: 13, q: "JS keyword for variable?", a: "let" },
+    { num: 14, q: "jQuery method to hide elements?", a: "hide" },
+    { num: 15, q: "HTML tag for a table row?", a: "<tr>" }
+];
+
+let index = 0;
+let score = 0;
+let reviewData = [];
+
+function escapeHTML(text) {
+    return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ------------------------------
+START QUIZ
+------------------------------ */
+$("#startBtn").click(function () {
+    if ($("#name").val() === "" || $("#studentId").val() === "") {
+        alert("Please enter your name and Student ID.");
+        return;
+    }
+    if ($("#name").hasClass("invalid") || $("#studentId").hasClass("invalid")) {
+        alert("Please correct the fields marked in red.");
+        return;
+    }
+    $("#userForm").fadeOut(300, function () {
+        loadQuestion();
+        $("#quizBox").fadeIn();
+        $("#answerInput").focus(); // auto-focus input
+    });
+});
+
+function loadQuestion() {
+    let item = quizData[index];
+    $("#questionText").html(item.num + ". " + escapeHTML(item.q));
+    $("#answerInput").val("");
+    $("#feedback").hide();
+    $("#submitBtn").show();
+    $("#nextBtn").hide();
+    $("#answerInput").focus(); // auto-focus input on new question
+}
+
+/* ------------------------------
+SUBMIT & NEXT BUTTON LOGIC WITH ENTER KEY
+------------------------------ */
+function submitAnswer() {
+    let item = quizData[index];
+    let userAns = $("#answerInput").val().trim();
+    let correctAns = item.a.trim();
+    let isCorrect = userAns.toLowerCase() === correctAns.toLowerCase();
+
+    reviewData.push({
+        question: item.q,
+        yourAnswer: userAns,
+        correctAnswer: correctAns,
+        status: isCorrect
+    });
+
+    if (isCorrect) {
+        score++;
+        $("#feedback").removeClass().addClass("correct").text("Correct! ✔");
+    } else {
+        $("#feedback").removeClass().addClass("wrong")
+            .html(`Wrong ✘ Correct Answer: ${escapeHTML(item.a)}`);
+    }
+
+    $("#feedback").fadeIn();
+    $("#submitBtn").hide();
+    $("#nextBtn").show();
+}
+
+$("#submitBtn").click(submitAnswer);
+
+$("#nextBtn").click(function () {
+    index++;
+    if (index < quizData.length) loadQuestion();
+    else showResults();
+});
+
+/* Allow Enter key to submit or go to next */
+$("#answerInput").on("keypress", function(e) {
+    if (e.which === 13) { // Enter key
+        e.preventDefault();
+        if ($("#submitBtn").is(":visible")) {
+            submitAnswer();
+        } else if ($("#nextBtn").is(":visible")) {
+            $("#nextBtn").click();
+        }
+    }
+});
+
+/* ------------------------------
+SHOW RESULTS
+------------------------------ */
+function showResults() {
+    $("#quizBox").fadeOut(300, function () {
+        $("#finalName").text("Name: " + $("#name").val() + " | Student ID: " + $("#studentId").val());
+        $("#finalScore").text(score);
+
+        $("#reviewList").empty();
+        reviewData.forEach(item => {
+            let reviewHTML = `
+                <div class="review-item">
+                    <b>${escapeHTML(item.question)}</b><br>
+                    Your Answer: ${escapeHTML(item.yourAnswer)}<br>
+                    Correct Answer: ${escapeHTML(item.correctAnswer)}<br>
+                    <b>Status:</b> ${item.status ? "Correct ✔" : "Wrong ✘"}
+                </div>
+            `;
+            $("#reviewList").append(reviewHTML);
+        });
+
+        $("#resultBox").fadeIn();
+    });
+}
+</script>
+
+</body>
+</html>
